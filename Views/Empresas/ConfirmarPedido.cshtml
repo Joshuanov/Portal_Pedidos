@@ -1,0 +1,126 @@
+﻿@model PedidoViewModel
+
+@{
+    ViewData["Title"] = "Confirmar Pedido";
+}
+
+<h2>Confirmar Pedido</h2>
+
+<div class="mt-5">
+    <p><strong>Empresa:</strong> @Model.EmpresaNombre</p>
+    <p><strong>Centro de Costos:</strong> @Model.CecoNombre</p>
+</div>
+
+
+<table class="table mt-4">
+    <thead>
+        <tr>
+            <th>Descripción</th>
+            <th>Cantidad</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var prenda in Model.Prendas)
+        {
+            <tr>
+                <td>@prenda.DescripcionPrenda</td>
+                <td>@prenda.CantidadIngresada</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div>
+    <!-- Botón para confirmar -->
+    <button id="confirmarPedido" class="btn btn-success">Confirmar y Guardar Pedido</button>
+    <!-- Botón para volver -->
+    <button id="volverPedido" class="btn btn-secondary">Volver y Editar Solicitud</button>
+</div>
+
+
+
+@section Scripts {
+    <script>
+        // Evento para "Confirmar y Guardar Pedido"
+        const confirmarBtn = document.getElementById("confirmarPedido");
+        if (confirmarBtn) {
+            confirmarBtn.addEventListener("click", function () {
+                try {
+                    const payload = {
+                        EmpresaId: @Model.EmpresaId,
+                        CecoId: '@Model.CecoId',
+                        Prendas: @Html.Raw(Json.Serialize(Model.Prendas)) // Serializa las prendas para enviarlas
+                                    };
+
+                    console.log("Enviando payload:", JSON.stringify(payload));
+
+                    fetch("@Url.Action("GuardarPedido", "Empresas")", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                        .then(response => {
+                            if (!response.ok) throw new Error("Error al guardar el pedido.");
+                            return response.json();
+                        })
+                        .then(data => {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Pedido guardado exitosamente',
+                                text: data.message || "El pedido fue registrado correctamente.",
+                                confirmButtonText: 'Aceptar'
+                            }).then(() => {
+                                window.location.href = "/CabPedidos/Index"; // Redirige al listado de pedidos
+                            });
+                        })
+                        .catch(error => {
+                            console.error("Error al guardar el pedido:", error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error al guardar el pedido',
+                                text: 'Ocurrió un problema al procesar el pedido. Por favor, inténtelo nuevamente.',
+                                confirmButtonText: 'Aceptar'
+                            });
+                        });
+                } catch (error) {
+                    console.error("Error al preparar los datos para guardar:", error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo preparar el pedido para guardar. Por favor, inténtelo nuevamente.',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
+            });
+        }
+
+        // Evento para "Volver a Ingreso de Solicitud"
+        const volverBtn = document.getElementById("volverPedido");
+        if (volverBtn) {
+            volverBtn.addEventListener("click", function (event) {
+                event.preventDefault();
+
+                try {
+                    const payload = {
+                        EmpresaId: @Model.EmpresaId,
+                        CecoId: '@Model.CecoId',
+                        Prendas: @Html.Raw(Json.Serialize(Model.Prendas))
+                                    };
+
+
+                    // Serializar los datos y redirigir al Index con ellos
+                    const queryString = encodeURIComponent(JSON.stringify(payload));
+                    window.location.href = `/Empresas/Index?data=${queryString}`;
+                } catch (error) {
+                    console.error("Error al procesar los datos para volver:", error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Ocurrió un problema al intentar regresar. Por favor, inténtelo de nuevo.',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
+            });
+        }
+
+    </script>
+}

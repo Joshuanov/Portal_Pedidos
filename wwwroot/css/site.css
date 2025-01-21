@@ -1,0 +1,53 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+}
+
+.swal-wide {
+    width: 600px !important; /* Ancho personalizado */
+    font-size: 14px; /* Tamaño del texto */
+}
+
+    .swal-wide .swal2-html-container {
+        max-height: 400px; /* Altura máxima del contenido */
+        overflow-y: auto; /* Scroll si excede la altura */
+    }
+
+/* Aplica solo al select generado por DataTables */
+.dataTables_length select {
+    -webkit-appearance: none; /* Ocultar la flecha en navegadores WebKit */
+    -moz-appearance: none; /* Ocultar la flecha en navegadores Gecko */
+    appearance: none; /* Ocultar la flecha en navegadores modernos */
+    background: transparent; /* Fondo transparente */
+    padding-right: 20px; /* Ajusta el espacio derecho */
+    border: 1px solid #ccc; /* Estiliza el borde */
+    border-radius: 4px; /* Bordes redondeados */
+}
+
+/* Opcional: Ajustar ancho */
+.dataTables_length select {
+    width: auto;
+}
+
+input.form-control-plaintext:focus {
+    outline: none; /* Elimina el borde de enfoque */
+    box-shadow: none; /* Elimina cualquier sombra que pueda aplicar Bootstrap */
+}

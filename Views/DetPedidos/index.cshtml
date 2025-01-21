@@ -1,0 +1,29 @@
+﻿@model IEnumerable<SistemaTGU.Models.PedidoDetalleViewModel>
+
+<h1>Detalles de los Pedidos</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+             <th>ID</th> 
+            <th>Código de Prenda</th>
+            <th>Cantidad Solicitada</th>
+           @*  <th>Precio Unitario</th>
+            <th>Total</th> *@
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var pedido in Model)
+        {
+            <tr>
+                <td>@pedido.PedidoId</td>
+                <td>@pedido.CodPrenda</td>
+                <td>@pedido.Cantidad</td>
+               @*  <td>@pedido.PrecioUnitario</td>
+                <td>@pedido.Total</td> *@
+            </tr>
+        }
+    </tbody>
+</table>
+
+

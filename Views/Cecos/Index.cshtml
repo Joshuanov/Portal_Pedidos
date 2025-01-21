@@ -1,0 +1,121 @@
+﻿@model IEnumerable<EmpresaViewModel>
+
+@{
+    ViewData["Title"] = "Listado de Empresas";
+}
+
+<h2>Buscar Empresa</h2>
+
+<!-- Formulario para buscar por selección de empresa -->
+<form asp-action="BuscarPorEmpresa" method="get" class="mb-3">
+    <div class="form-group">
+        <label for="empresaSelect">Seleccione una Empresa:</label>
+        <select id="empresaSelect" name="empresaId" class="form-select">
+            
+            <option value="">-- Seleccione una Empresa --</option>
+            @foreach (var empresa in Model)
+            {
+                <option value="@empresa.Id">@empresa.Nombre (@empresa.Rut)</option>
+            }
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Buscar</button>
+
+
+
+<div class="form-group mt-3">
+        <label for="cecoSelect">CECO:</label>
+        <select id="cecoSelect" name="cecoId" class="form-select" disabled>
+            <option value="">-- Seleccione un CECO --</option>
+        </select>
+    </div>
+</form>
+
+
+
+
+
+
+
+@* <!-- Formulario para buscar por RUT -->
+<form asp-action="BuscarPorRut" method="get" class="mb-3">
+    <div class="form-group">
+        <label for="rut">Buscar por RUT:</label>
+        <input type="text" id="rut" name="rut" class="form-control" placeholder="12345678-9" />
+    </div>
+    <button type="submit" class="btn btn-secondary mt-2">Buscar</button>
+</form> *@
+
+<!-- Inicialización de Tom Select -->
+@section Scripts{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inicializar Tom Select para el dropdown de empresa
+            new TomSelect("#empresaSelect", {
+                create: false, // No permitir crear nuevas opciones
+                sortField: {
+                    field: "text", // Ordenar por texto
+                    direction: "asc"
+                },
+                placeholder: "Seleccione o busque una Empresa/Rut"
+            });
+            // new TomSelect("#cecoSelect", {
+            //     create: false, // No permitir crear nuevas opciones
+            //     sortField: {
+            //         field: "text", // Ordenar por texto
+            //         direction: "asc"
+            //     },
+            //     placeholder: "Primero debe Seleccionar o buscar una Empresa/Rut"
+            // });
+        });
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const empresaSelect = document.querySelector("#empresaSelect");
+            const cecoSelect = document.querySelector("#cecoSelect");
+
+            empresaSelect.addEventListener("change", function () {
+                const empresaId = this.value;
+
+                if (empresaId) {
+                    fetch(`/ObtenerCecosPorEmpresa?empresaId=${empresaId}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error("Error al cargar los CECOs");
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Limpiar opciones previas
+                            cecoSelect.innerHTML = "<option value=''>-- Seleccione un CECO --</option>";
+
+                            // Agregar las nuevas opciones
+                            data.forEach(ceco => {
+                                const option = document.createElement("option");
+                                option.value = ceco.id;
+                                option.textContent = `${ceco.denominacion} (${ceco.direccion || "Sin Dirección"})`;
+                                cecoSelect.appendChild(option);
+                            });
+
+                            // Habilitar el dropdown
+                            cecoSelect.disabled = false;
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            cecoSelect.innerHTML = "<option value=''>Error al cargar CECOs</option>";
+                            cecoSelect.disabled = true;
+                        });
+                } else {
+                    // Si no hay empresa seleccionada, deshabilitar y limpiar CECOs
+                    cecoSelect.innerHTML = "<option value=''>-- Seleccione un CECO --</option>";
+                    cecoSelect.disabled = true;
+                }
+            });
+        });
+    
+     
+
+    </script>
+
+
+}

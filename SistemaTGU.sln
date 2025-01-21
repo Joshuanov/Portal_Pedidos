@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SistemaTGU", "SistemaTGU.csproj", "{E7799818-C76D-49EF-97A7-29DAA2B543E8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E7799818-C76D-49EF-97A7-29DAA2B543E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7799818-C76D-49EF-97A7-29DAA2B543E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7799818-C76D-49EF-97A7-29DAA2B543E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7799818-C76D-49EF-97A7-29DAA2B543E8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {15AF2D8A-ECB2-4629-9073-914F24658DC0}
+	EndGlobalSection
+EndGlobal

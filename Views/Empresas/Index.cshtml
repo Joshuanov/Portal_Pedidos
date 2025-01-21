@@ -1,0 +1,330 @@
+﻿@model PedidoViewModel
+
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<h2 class="mb-4">Ingreso de Solicitud</h2>
+
+
+
+
+
+<!-- Contenedor principal -->
+<div class="container mb-5  mt-3">
+    <!-- Grupo de formulario para selección de empresa -->
+    <div class="form-group">
+        <form id="pedidoForm" method="post">
+            <!-- Formulario que se enviará por POST -->
+            <!-- Dropdown para seleccionar una empresa -->
+            <div class="form-group">
+                <label for="empresaSelect">Seleccione una Empresa:</label> <!-- Etiqueta descriptiva -->
+                <select id="empresaSelect" asp-for="EmpresaId" class="form-select">
+                    <!-- Dropdown enlazado al modelo EmpresaId -->
+
+                    <option value="">-- Seleccione una Empresa --</option>
+                    @foreach (var empresa in Model.Empresa) // Itera sobre las empresas disponibles en el modelo
+                    {
+                        {
+                            <option value="@empresa.Id">@empresa.Nombre (@empresa.Rut)</option> <!-- Muestra el nombre y RUT de la empresa -->
+                        }
+                    }
+                </select>
+            </div>
+
+
+            <!-- Dropdown para seleccionar un centro de costos -->
+            <div class="form-group mt-3 ">
+                <label for="cecoSelect">Seleccione un Centro de Costos:</label>
+                <select id="cecoSelect" asp-for="CecoId" class="form-select" disabled>
+                    <!-- Deshabilitado por defecto -->
+                    <option value="">-- Ingresar Empresa primero --</option> <!-- Mensaje predeterminado -->
+                </select>
+            </div>
+
+
+            <!-- Tabla dinámica para ingresar uniformes -->
+            <div class="form-group mt-5 ">
+                <table id="prendasTable" class="display">
+                    <thead>
+                        <tr>
+                            <th>Uniformes</th> <!-- Columna para nombres de uniformes -->
+                            <th>Cantidad</th> <!-- Columna para ingresar cantidades -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Las filas se llenarán dinámicamente con JavaScript -->
+                    </tbody>
+                </table>
+
+            </div>
+            <!-- Botón para enviar el formulario -->
+            <button type="submit" id="enviarPedido" class="btn btn-success mt-3">Enviar Pedido</button>
+        </form>
+    </div>
+</div>
+
+
+
+
+
+
+@* <!-- Formulario para buscar por RUT -->
+    <form asp-action="BuscarPorRut" method="get" class="mb-3">
+    <div class="form-group">
+    <label for="rut">Buscar por RUT:</label>
+    <input type="text" id="rut" name="rut" class="form-control" placeholder="12345678-9" />
+    </div>
+    <button type="submit" class="btn btn-secondary mt-2">Buscar</button>
+    </form> *@
+
+
+
+<!-- Scripts de inicialización y funcionalidad -->
+@section Scripts {
+    <script>
+        let table = $('#prendasTable').DataTable({
+            pageLength: 25, // Número de registros por página
+            language: {
+                lengthMenu: "Mostrar _MENU_ registros por página",
+                zeroRecords: "No se encontraron resultados",
+                info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                infoEmpty: "No hay registros disponibles",
+                infoFiltered: "(filtrado de _MAX_ registros en total)",
+                search: "Buscar prenda",
+                paginate: {
+                    first: "Primera",
+                    last: "Última",
+                    next: "Siguiente",
+                    previous: "Anterior"
+                }
+            },
+           @*  stateSave: true *@ // Mantener el estado de la tabla
+        });
+
+        
+
+
+        const helperFunction = (empresaId, arr = []) => {
+            arr.map(x => console.log(x.CantidadIngresada))
+            fetch(`/Prendas/ObtenerPrendasPorEmpresa?empresaId=${empresaId}`) // Llama al backend
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Error al cargar las prendas.");
+                    }
+                    return response.json();
+
+                })
+                .then(data => {
+                    console.log("Datos recuperados:", data); // Verifica los datos en la consola
+                    // Procesa los datos aquí
+                    table.destroy(); // Destruye la instancia actual de la tabla
+                    const tbody = document.querySelector("#prendasTable tbody");
+                    tbody.innerHTML = ""; // Limpia las filas de la tabla
+
+                    // Agrega las prendas a la tabla
+                    data.forEach((prenda, index) => {
+                        let cantidad = 0;
+
+                        arr.forEach((valor, clave) => {
+                            //console.log(prenda.codigoUsr);
+                            if (valor.CodigoUsr === prenda.codigoUsr) {
+                                cantidad = valor.CantidadIngresada;
+                            }
+                        });
+                        const row = `
+                                <tr>
+                                    <td>${prenda.descripcionPrenda}</td>
+                                    <td>
+                                        <input type="number"
+                                            asp-for="Prenda[${prenda.id}].CantidadIngresada"
+                                            class="form-control"
+                                            data-codprenda="${prenda.codigoUsr}"
+                                            value="${cantidad}"
+                                            min="0" />
+                                    </td>
+                                </tr>`;
+                        tbody.insertAdjacentHTML("beforeend", row);
+                    });
+
+                    // Reinicializa DataTables
+                     table = $('#prendasTable').DataTable({
+                        pageLength: 25, // Número de registros por página
+                        language: {
+                            lengthMenu: "Mostrar _MENU_ registros por página",
+                            zeroRecords: "No se encontraron resultados",
+                            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                            infoEmpty: "No hay registros disponibles",
+                            infoFiltered: "(filtrado de _MAX_ registros en total)",
+                            search: "Buscar prenda",
+                            paginate: {
+                                first: "Primera",
+                                last: "Última",
+                                next: "Siguiente",
+                                previous: "Anterior"
+                            }
+                        },
+        @*  stateSave: true *@ // Mantener el estado de la tabla
+                });
+                })
+                .catch(error => {
+                    console.error("Error al cargar las prendas:", error);
+                });
+                console.log("prueba", arr);
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+            // Inicializa el selector de empresa usando Tom Select
+            new TomSelect("#empresaSelect", {
+                create: false, // No permite crear nuevas opciones
+                sortField: {
+                    field: "text", // Ordena las opciones por texto
+                    direction: "asc" // Orden ascendente
+                },
+                placeholder: "Seleccione presionando aquí o Ingrese datos Código/Empresa/Rut"
+            });
+        });
+
+        // Configuración de eventos y variables
+        document.addEventListener("DOMContentLoaded", function () {
+            // Elementos del DOM
+            const empresaSelect = document.querySelector("#empresaSelect");
+            const cecoSelect = document.querySelector("#cecoSelect");
+            const tbody = document.querySelector("#prendasTable tbody");
+
+            // Prendas y datos preseleccionados desde el modelo
+            const preselectedPrendas = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Prendas));
+            const preselectedCecoId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CecoId));
+            const preselectedEmpresaId = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.EmpresaId));
+            if (preselectedCecoId) {
+                helperFunction(preselectedEmpresaId, preselectedPrendas)
+                restaurarFormulario()
+            }
+            console.log(preselectedPrendas)
+
+            // Función para cargar los CECOs al seleccionar una empresa
+            function cargarCecos(empresaId, cecoSeleccionado = null) {
+                fetch(`/Cecos/ObtenerCecosPorEmpresa?empresaId=${empresaId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            console.error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                            throw new Error("Error al cargar los CECOs");
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Vaciar y rellenar el dropdown de CECOs
+                        cecoSelect.innerHTML = "<option value=''>-- Presione aquí para ver disponibles --</option>";
+                        data.forEach(ceco => {
+                            const option = document.createElement("option");
+                            option.value = ceco.id;
+                            option.textContent = `${ceco.codigo} - ${ceco.denominacion} (${ceco.direccion || "Sin Dirección"})`;
+                            if (ceco.id == cecoSeleccionado) {
+                                option.selected = true;
+                            }
+                            cecoSelect.appendChild(option);
+                        });
+                        cecoSelect.disabled = false; // Habilitar el selector de CECOs
+                    })
+                    .catch(error => {
+                        console.error("Error al cargar CECOs:", error);
+                        cecoSelect.innerHTML = "<option value=''>-- Empresa no tiene Cecos asociados --</option>";
+                        cecoSelect.disabled = true; //cambiare a False mientras se soluciona la logica de pedidos sin ceco
+                    });
+
+            }
+
+
+            // Restaura las selecciones al volver desde ConfirmarPedido
+            function restaurarFormulario() {
+                if (preselectedEmpresaId) {
+                    empresaSelect.value = preselectedEmpresaId; // Selecciona la empresa preseleccionada
+                    cargarCecos(preselectedEmpresaId, preselectedCecoId); // Carga los CECOs asociados
+
+                }
+            }
+
+            // Evento para cargar los CECOs al cambiar la empresa
+            empresaSelect.addEventListener("change", function () {
+                const empresaId = this.value;
+
+                if (empresaId) {
+                    cargarCecos(empresaId); // Cargar CECOs asociados a la empresa seleccionada
+                } else {
+                    cecoSelect.innerHTML = "<option value=''>-- Complete el campo Empresa --</option>";
+                    cecoSelect.disabled = true; // Deshabilitar CECOs si no hay empresa seleccionada
+                }
+            });
+
+            // Ejecutar la restauración del formulario al cargar la página
+            restaurarFormulario();
+        });
+
+        // Configuración de DataTables y eventos para gestionar las prendas
+        document.addEventListener("DOMContentLoaded", function () {
+            const cecoSelect = document.querySelector("#cecoSelect");
+
+            // Inicializa DataTables para gestionar la tabla de prendas
+
+
+            // Evento para cargar prendas dinámicamente al seleccionar un CECO
+            cecoSelect.addEventListener("change", function () {
+                const empresaId = empresaSelect.value;
+                if (empresaId) {
+                    helperFunction(empresaId)
+                } else {
+                    table.clear().draw(); // Limpia la tabla si no hay CECO seleccionado
+                }
+            });
+        });
+
+        // Evento para enviar el formulario con los datos seleccionados
+        document.getElementById("pedidoForm").addEventListener("submit", function (e) {
+            e.preventDefault(); // Evita el envío predeterminado del formulario
+
+            const empresaNombre = empresaSelect.options[empresaSelect.selectedIndex]?.text.trim(); // Captura nombre visible
+            const cecoNombre = cecoSelect.options[cecoSelect.selectedIndex]?.text.trim(); // Captura nombre visible
+
+            const table = $('#prendasTable').DataTable();
+            const prendasFiltradas = [];
+
+            // Recorre las filas de la tabla para obtener las prendas seleccionadas
+            table.rows().every(function () {
+                const row = this.node(); // Obtiene el nodo de la fila
+                const cantidadInput = row.querySelector("input[type='number']");
+                const cantidad = parseInt(cantidadInput.value);
+                const codPrenda = cantidadInput.getAttribute("data-codprenda");
+                const descripcionPrenda = row.querySelector("td:first-child").textContent.trim();
+
+                if (cantidad > 0) {
+                    prendasFiltradas.push({
+                        CodigoUsr: codPrenda,
+                        CantidadIngresada: cantidad,
+                        DescripcionPrenda: descripcionPrenda
+                    });
+                }
+            });
+
+            if (prendasFiltradas.length === 0) {
+                Swal.fire({
+                    icon: "error",
+                    text: "Debe ingresar al menos una cantidad para las prendas."
+                });
+                return;
+            }
+
+            // Preparar los datos para enviar al servidor
+            const payload = {
+                EmpresaId: document.getElementById("empresaSelect").value,
+                EmpresaNombre: empresaNombre, // Incluye el nombre de la empresa
+                CecoId: document.getElementById("cecoSelect").value,
+                CecoNombre: cecoNombre, // Incluye el nombre del CECO
+                Prendas: prendasFiltradas               
+
+            };
+
+            // Codifica los datos en la URL y redirige
+            const query = encodeURIComponent(JSON.stringify(payload));
+            window.location.href = `/Empresas/ConfirmarPedido?data=${query}`;
+        });
+    </script>
+}

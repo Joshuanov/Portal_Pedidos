@@ -1,0 +1,135 @@
+﻿@model SistemaTGU.Models.CabeceraDetalleViewModel
+
+@{
+    ViewData["Title"] = "Editar Detalle";
+}
+
+
+<h1 class="mb-4">Editar Detalle</h1>
+
+<div class="mt-4">
+    <p><strong>Empresa:</strong> @Model.NombreEmpresa</p>
+    <p><strong>Centro de Costos:</strong> @Model.DenominacionCeco</p>
+    <p><strong>Solicitante:</strong> @Model.Solicitante</p>
+</div>
+
+
+<form id="formEditarDetalle" asp-action="GuardarDetalles" method="post" class="row gx-2 align-items-center mt-5">
+    <table id="editarDetalleTable" class="table table-striped">
+        <thead>
+            <tr>
+                <th class="text-center">Código</th>
+                <th class="text-center">Descripción</th>
+                <th class="text-center">Cantidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var index = 0;
+            }
+            @foreach (var detalle in Model.Detalles)
+            {
+                <tr>
+                    <td>
+                        <input type="hidden" name="[@index].PedidoId" value="@detalle.PedidoId" />
+                        <input type="text" name="[@index].CodPrenda" value="@detalle.CodPrenda" class="form-control-plaintext auto-width col-code" readonly />
+                    </td>
+                    <td>
+                        <input type="text" name="[@index].DescripcionPrenda" value="@detalle.DescripcionPrenda" class="form-control-plaintext auto-width col-description" readonly />
+                    </td>
+                    <td>
+                        <input type="number" name="[@index].Cantidad" value="@detalle.Cantidad" class="form-control col-quantity" min="1" />
+                    </td>
+                </tr>
+                index++;
+            }
+
+        </tbody>
+    </table>
+
+
+
+    <div class="d-flex">
+        <button type="submit" class="btn btn-primary me-2">Guardar Cambios</button>
+        <a asp-action="Index" asp-controller="CabPedidos" class="btn btn-secondary">Volver</a>
+    </div>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#editarDetalleTable').DataTable({
+            paging: false, // Habilitar paginación
+            searching: false, // Habilitar barra de búsqueda
+            ordering: false, // Habilitar ordenamiento
+            lengthMenu: [5, 10, 25, 50], // Opciones de elementos por página
+            language: {
+                lengthMenu: "Mostrar _MENU_ registros por página",
+                zeroRecords: "No se encontraron resultados",
+                info: "Mostrando página _PAGE_ de _PAGES_",
+                infoEmpty: "No hay registros disponibles",
+                infoFiltered: "(filtrado de _MAX_ registros en total)",
+                search: "Buscar:",
+                paginate: {
+                    first: "Primera",
+                    last: "Última",
+                    next: "Siguiente",
+                    previous: "Anterior"
+                }
+            }
+        });
+    });
+
+
+    // Manejar el envío del formulario con AJAX
+    document.getElementById('formEditarDetalle').addEventListener('submit', function (event) {
+        event.preventDefault(); // Prevenir envío tradicional
+
+        // Serializar los datos del formulario
+        const formData = new FormData(this);
+
+        // Enviar los datos con fetch
+        fetch('@Url.Action("GuardarDetalles", "CabPedidos")', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostrar SweetAlert de éxito
+                    Swal.fire({
+                        title: '¡Éxito!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonText: 'Aceptar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirigir al índice de CabPedidos
+                            window.location.href = '@Url.Action("Index", "CabPedidos")';
+                        }
+                    });
+                } else {
+                    // Mostrar SweetAlert de error
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message,
+                        icon: 'error',
+                        confirmButtonText: 'Aceptar'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Ocurrió un error al guardar los cambios.',
+                    icon: 'error',
+                    confirmButtonText: 'Aceptar'
+                });
+            });
+    });
+</script>

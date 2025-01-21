@@ -1,0 +1,29 @@
+﻿@model PedidoViewModel
+
+@{
+    ViewData["Title"] = "Listado de Prendas ERP";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div class="container mt-5">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Codigo</th>
+                <th>Descripcion</th>
+                <th>Cantidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var prenda in Model.Prendas)
+            {
+                <tr>
+                    <td>@prenda.CodigoUsr</td>
+                    <td>@prenda.DescripcionPrenda</td>
+                    <td>@prenda.CantidadIngresada</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

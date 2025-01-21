@@ -1,0 +1,229 @@
+﻿@model IEnumerable<SistemaTGU.Models.CabeceraDetalleViewModel>
+
+@{
+    ViewData["Title"] = "Lista Pedidos";
+}
+
+<h1>Pedidos</h1>
+
+<!-- Botón para exportar a Excel -->
+<div>
+    <button class="btn btn-success d-flex align-items-center justify-content-center mb-3"
+            style="width: 200px; height: 40px; font-weight: bold; font-size: 0.9rem;"
+            type="button" id="exportExcelBtn" title="Exportar a Excel">
+        <i class="bi bi-file-earmark-spreadsheet-fill me-1" style="font-size: 1rem;"></i>
+        Descargar Pedidos
+    </button>
+
+    <table id="pedidosTable" class="table table-hover table-sm">
+        <thead class="thead-light">
+            <tr>
+                <th class="text-center">Folio</th>
+                <th class="text-center">Fecha Solicitud</th>
+                <th class="text-center">Solicitante</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Ceco</th>
+                <th class="text-center">Empresa</th>
+                <th class="text-center">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cabecera in Model)
+            {
+                <tr>
+                    <td>@cabecera.Id</td>
+                    <td>@cabecera.FechaSolicitud</td>
+                    <td>@cabecera.Solicitante</td>
+                    <td>@cabecera.EstadoId</td>
+                    <td>@cabecera.DenominacionCeco</td>
+                    <td>@cabecera.NombreEmpresa</td>
+                    <td>
+                        <!-- Contenedor para los botones -->
+                        <div class="d-inline-flex align-items-center">
+
+                            @if (ViewBag.UsuarioActual == "correo@autorizado.cl")
+                            {
+                                <a asp-action="EditarDetalle" asp-controller="CabPedidos" asp-route-id="@cabecera.Id" class="btn btn-primary text-nowrap" style="width: 150px">
+                                    Editar Detalles
+                                </a>
+                            }else                         
+                            {
+                                <!-- Botón para ver detalles en un modal -->
+                                <button class="btn btn-primary btn-sm d-flex align-items-center justify-content-center" style="width: 100px; height: 35px;" type="button" onclick="verDetalles(@cabecera.Id)" title="Ver Detalles">
+                                    Detalles
+                                </button>
+
+                            }
+
+
+                        </div>
+                    </td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Modal para mostrar detalles -->
+    <div class="modal fade" id="detallesModal" tabindex="-1" aria-labelledby="detallesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detallesModalLabel">Detalles del Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Prenda</th>
+                                <th>Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detallesBody">
+                            <!-- Los detalles se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        let dataTable; // Define dataTable en un ámbito global
+        $(document).ready(function () {
+            // Inicializa DataTables
+            dataTable = $('#pedidosTable').DataTable({
+                language: {
+                    lengthMenu: "Mostrar _MENU_ registros por página",
+                    zeroRecords: "No se encontraron resultados",
+                    info: "Mostrando página _PAGE_ de _PAGES_",
+                    infoEmpty: "No hay registros disponibles",
+                    infoFiltered: "(filtrado de _MAX_ registros en total)",
+                    search: "Buscar:",
+                    paginate: {
+                        first: "Primera",
+                        last: "Última",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                },
+                pageLength: 10 // Número de registros por página
+            });
+        });
+
+        // Función para cargar y mostrar detalles en el modal
+        function verDetalles(id) {
+            const detalles = @Html.Raw(Json.Serialize(Model.ToDictionary(c => c.Id, c => c.Detalles)));
+
+
+            // Limpia el cuerpo del modal
+            const tbody = document.getElementById('detallesBody');
+            tbody.innerHTML = '';
+
+            // Obtiene los detalles del pedido
+            const pedidoDetalles = detalles[id];
+            pedidoDetalles.forEach(detalle => {
+                const row = `
+                                    <tr>
+                                        <td>${detalle.codPrenda}</td>
+                                        <td>${detalle.descripcionPrenda}</td>
+                                        <td>${detalle.cantidad}</td>
+                                    </tr>`;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+            // console.log(detalles);
+
+            // Muestra el modal
+            $('#detallesModal').modal('show');
+        }
+
+
+        // Función para exportar la tabla a Excel
+        $('#exportExcelBtn').on('click', function () {
+            // Obtener modelo completo del backend
+            const pedidosData = @Html.Raw(Json.Serialize(Model));
+            const tableData = [];
+            // console.log(pedidosData);
+
+            // Encabezados
+            tableData.push([
+                'Folio',
+                'Fecha Solicitud',
+                'Solicitante',
+                'Estado',
+                'Ceco',
+                'Empresa',
+                'Código Prenda',
+                'Descripción Prenda',
+                'Cantidad'
+            ]);
+
+
+            // Recorrer cada pedido en pedidosData
+            pedidosData.forEach(pedido => {
+                const { id, fechaSolicitud, solicitante, estadoId, denominacionCeco, nombreEmpresa, detalles } = pedido;
+
+                if (detalles && detalles.length > 0) {
+                    // Si hay detalles, añade una fila por cada detalle
+                    detalles.forEach(detalle => {
+                        tableData.push([
+                            id, // Folio
+                            fechaSolicitud, // Fecha Solicitud
+                            solicitante, // Solicitante
+                            estadoId, // Estado
+                            denominacionCeco, // Ceco
+                            nombreEmpresa.trim(), // Empresa (elimina espacios en exceso)
+                            detalle.codPrenda, // Código Prenda
+                            detalle.descripcionPrenda, // Descripción Prenda
+                            detalle.cantidad // Cantidad
+                        ]);
+                    });
+                } else {
+                    // Si no hay detalles, añade solo los datos de la cabecera
+                    tableData.push([
+                        id, // Folio
+                        fechaSolicitud, // Fecha Solicitud
+                        solicitante, // Solicitante
+                        estadoId, // Estado
+                        denominacionCeco, // Ceco
+                        nombreEmpresa.trim(), // Empresa
+                        '', // Código Prenda vacío
+                        '', // Descripción Prenda vacío
+                        '' // Cantidad vacío
+                    ]);
+                }
+            });
+
+            // Crear hoja de Excel
+            if (tableData.length > 1) {
+                const worksheet = XLSX.utils.aoa_to_sheet(tableData);
+
+                // Agregar filtros a la primera fila (encabezados)
+                worksheet['!autofilter'] = { ref: `A1:I${tableData.length}` };
+
+                // Ajustar automáticamente el ancho de las columnas
+                const columnWidths = tableData[0].map((col, i) => ({
+                    wch: Math.max(
+                        col.length, // Ancho del encabezado
+                        ...tableData.map(row => (row[i] ? row[i].toString().length : 0)) // Ancho del contenido
+                    )
+                }));
+                worksheet['!cols'] = columnWidths;
+
+                // Crear libro y hoja
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Datos');
+
+                // Descargar archivo
+                XLSX.writeFile(workbook, 'Tabla_de_Pedidos.xlsx');
+            } else {
+                alert('No hay datos para exportar.');
+            }
+        });
+    </script>
+}
